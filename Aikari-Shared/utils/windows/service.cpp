@@ -3,6 +3,7 @@
 #include <Aikari-Shared/utils/windows/winString.h>
 #include <format>
 #include <memory>
+#include <type_traits>
 #include <vector>
 #include <windows.h>
 
@@ -10,7 +11,19 @@ namespace winStringUtils = AikariShared::Utils::Windows::WinString;
 
 namespace AikariShared::Utils::Windows::Service
 {
-    using ServiceHandle = std::unique_ptr<void, decltype(&CloseServiceHandle)>;
+    struct ServiceHandleDeleter
+    {
+        void operator()(SC_HANDLE handle) const
+        {
+            if (handle != nullptr)
+            {
+                CloseServiceHandle(handle);
+            }
+        }
+    };
+
+    using ServiceHandle =
+        std::unique_ptr<std::remove_pointer_t<SC_HANDLE>, ServiceHandleDeleter>;
 
     static std::string _serviceStateToString(DWORD state)
     {
@@ -69,7 +82,7 @@ namespace AikariShared::Utils::Windows::Service
             return result;
         }
 
-        ServiceHandle closeScm(scm, CloseServiceHandle);
+        ServiceHandle closeScm(scm);
 
         const auto serviceNameW = winStringUtils::StringToWstring(serviceName);
         SC_HANDLE service = OpenServiceW(
@@ -89,7 +102,7 @@ namespace AikariShared::Utils::Windows::Service
             return result;
         }
 
-        ServiceHandle closeService(service, CloseServiceHandle);
+        ServiceHandle closeService(service);
 
         result.exists = true;
 
