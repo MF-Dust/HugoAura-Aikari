@@ -87,13 +87,18 @@ namespace AikariPLS::Components::MQTTBroker::Class
 
                     this->clientId = pkt.client_id();
 
+                    auto& sharedStates =
+                        AikariPLS::Lifecycle::PLSSharedStates::getInstance();
+                    const auto seewoProfile = sharedStates.getExactVal(
+                        &AikariPLS::Types::Lifecycle::PLSSharedStates::
+                            seewoServiceProfile
+                    );
+
                     AikariPLS::Components::MQTTClient::ClientLaunchArg
                         clientLaunchArg = { .targetHost =
-                                                AikariPLS::Types::Constants::
-                                                    Init::NetworkInit::HOSTNAME,
+                                                seewoProfile.brokerHost,
                                             .targetPort =
-                                                AikariPLS::Types::Constants::
-                                                    Init::NetworkInit::PORT,
+                                                seewoProfile.brokerPort,
 
                                             .clientId = this->clientId,
                                             .username = username,

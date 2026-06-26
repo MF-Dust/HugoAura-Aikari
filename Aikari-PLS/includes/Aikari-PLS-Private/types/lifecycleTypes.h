@@ -2,6 +2,7 @@
 
 #include <Aikari-Launcher-Public/constants/lifecycle.h>
 #include <Aikari-PLS-Private/types/components/mqtt.h>
+#include <Aikari-PLS-Private/types/components/seewoServiceProfile.h>
 #include <memory>
 #include <minwindef.h>
 
@@ -44,11 +45,14 @@ namespace AikariPLS::Types::Lifecycle
     {
         AikariLauncher::Public::Constants::Lifecycle::APPLICATION_RUNTIME_MODES
             runtimeMode;
+        AikariPLS::Components::Infrastructure::SeewoService::
+            SeewoServiceProfile seewoServiceProfile;
 
         static PLSSharedStates createDefault()
         {
-            return { .runtimeMode = AikariLauncher::Public::Constants::Lifecycle::
-                         APPLICATION_RUNTIME_MODES::NORMAL };
+            return { .runtimeMode = AikariLauncher::Public::Constants::
+                         Lifecycle::APPLICATION_RUNTIME_MODES::NORMAL,
+                     .seewoServiceProfile = {} };
         };
     };
 

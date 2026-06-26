@@ -19,5 +19,11 @@
       }
     }
   },
+  "compat": {
+    "brokerHostOverride": "",
+    "brokerPortOverride": 8883,
+    "manageLegacyBrokerHosts": true,
+    "forceRegenMqttCert": false
+  },
   "module": "pls"
 }

@@ -11,6 +11,7 @@ project_add_library(Aikari-Shared SHARED
         utils/string.cpp
         utils/windows/network.cpp
         utils/windows/process.cpp
+        utils/windows/service.cpp
         utils/windows/winString.cpp
         virtual/IConfigManager.cpp
         virtual/itc/IMainToSubMsgHandlerBase.cpp

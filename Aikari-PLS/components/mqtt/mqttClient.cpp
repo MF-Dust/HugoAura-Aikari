@@ -9,6 +9,7 @@
 #include <Aikari-Shared/infrastructure/telemetryShortFn.h>
 #include <Aikari-Shared/utils/network.h>
 #include <Aikari-Shared/utils/windows.h>
+#include <algorithm>
 #include <exception>
 #include <winsock2.h>
 
@@ -275,32 +276,44 @@ namespace AikariPLS::Components::MQTTClient
 
     bool Client::refreshHostRealIP()
     {
+        constexpr const char* AIKARI_LOOPBACK = "127.11.45.14";
+
+        auto& sharedStates =
+            AikariPLS::Lifecycle::PLSSharedStates::getInstance();
+        const auto seewoProfile = sharedStates.getExactVal(
+            &AikariPLS::Types::Lifecycle::PLSSharedStates::seewoServiceProfile
+        );
+
+        auto addDest = [this](const std::string& dest)
+        {
+            if (!dest.empty() && dest != AIKARI_LOOPBACK &&
+                std::ranges::find(this->realBrokerDest, dest) ==
+                    this->realBrokerDest.end())
+            {
+                this->realBrokerDest.emplace_back(dest);
+            }
+        };
+
         try
         {
             auto dnsQueryResult =
                 AikariShared::Utils::Network::DNS::getDNSARecordResult(
                     this->launchArg.targetHost
                 );
-            if (dnsQueryResult.empty())
+            for (const auto& ip : dnsQueryResult)
+            {
+                addDest(ip);
+            }
+
+            if (this->realBrokerDest.empty())
             {
                 throw std::runtime_error(
                     "Failed to get broker real IP through DNS query."
                 );
             }
-
-            this->realBrokerDest = dnsQueryResult;
-            return true;
         }
         catch (const std::exception& err)
         {
-            this->realBrokerDest.emplace_back(
-                AikariPLS::Types::Constants::MQTT::Client::
-                    FALLBACK_IOT_BROKER_ADDR
-            );
-            this->realBrokerDest.emplace_back(
-                AikariPLS::Types::Constants::MQTT::Client::
-                    FALLBACK_IOT_BROKER_IP
-            );
             CUSTOM_LOG_WARN("Error getting broker real IP: {}", err.what());
             Telemetry::addBreadcrumb(
                 "error",
@@ -308,8 +321,22 @@ namespace AikariPLS::Components::MQTTClient
                 TELEMETRY_ACTION_CATEGORY,
                 "warning"
             );
-            return true;
         }
+
+        addDest(seewoProfile.brokerHost);
+        for (const auto& host : seewoProfile.legacyBrokerHosts)
+        {
+            addDest(host);
+        }
+        addDest(
+            AikariPLS::Types::Constants::MQTT::Client::
+                FALLBACK_IOT_BROKER_ADDR
+        );
+        addDest(
+            AikariPLS::Types::Constants::MQTT::Client::FALLBACK_IOT_BROKER_IP
+        );
+
+        return !this->realBrokerDest.empty();
     }
 
     void Client::startSendQueueWorker()

@@ -9,6 +9,7 @@
         Aikari-PLS.rc
         components/infrastructure/config.h
         components/infrastructure/config.cpp
+        components/infrastructure/seewoServiceProfile.cpp
         components/mqtt/mqttBroker.h
         components/mqtt/mqttBroker.cpp
         components/mqtt/mqttBrokerHandler.h
